@@ -124,6 +124,7 @@ export const Gallery = ({ ...props }) => {
             <artLeft03Material
               uColor="black"
               ref={(ref) => (frameRefs.current["left03"] = ref)}
+              uResolution={[1, 2]}
             />
           </mesh>
         </Frame>
