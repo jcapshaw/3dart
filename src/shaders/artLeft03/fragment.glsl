@@ -1,47 +1,57 @@
- precision mediump float;
+precision mediump float;
 
-    uniform vec2 uResolution;
-    uniform float uTime;
-    varying vec2 vUv;
+uniform vec2 uResolution;
+uniform float uTime;
+varying vec2 vUv;
 
-    #define PI 3.14159265359
+#define PI 3.14159265359
 
-    vec3 renauPalette(float t) {
-        if (t < 0.25) return vec3(0.5, 0.0, 0.5);    //purple
-        else if (t < 0.5) return vec3(1.0, 0.9, 0.0); //yellow
-        else if (t < 0.75) return vec3(0.9, 0.1, 0.1);// red
-       else return vec3(0.0, 0.75, 0.45); // white
-    }
+vec3 renauPalette(float t) {
+    if (t < 0.25) return vec3(0.5, 0.0, 0.5);    // morado
+    else if (t < 0.5) return vec3(1.0, 0.9, 0.0); // amarillo
+    else if (t < 0.95) return vec3(0.9, 0.1, 0.1);// rojo
+    else return vec3(0.15, 0.15, 0.17);           // 
+}
 
-    float star(vec2 p, float points, float inner, float outer) {
-        float a = atan(p.y, p.x);
-        float r = length(p);
-        float m = mod(a * points / PI, 2.0);
-        float d = mix(inner, outer, step(1.0, m));
-        return smoothstep(d, d + 0.01, r);
-    }
+// Función para generar una estrella de puntas definidas
+float star(vec2 p, float points, float inner, float outer) {
+    float a = atan(p.y, p.x);
+    float r = length(p);
+    float m = mod(a * points / PI, 2.0);
+    float d = mix(inner, outer, step(1.0, m));
+    return smoothstep(d, d + 0.005, r); // margen más definido
+}
 
-    float fist(vec2 uv) {
-        uv = uv * 2.0 - 1.0;
-        float box = step(0.3, abs(uv.x)) * step(0.3, abs(uv.y));
-        float thumb = step(length(uv - vec2(-0.5, 0.2)), 0.2);
-        return max(1.0 - box, thumb);
-    }
+// Fist decorativo (opcional)
+float fist(vec2 uv) {
+    uv = uv * 2.0 - 1.0;
+    float box = step(0.3, abs(uv.x)) * step(0.3, abs(uv.y));
+    float thumb = step(length(uv - vec2(-0.5, 0.2)), 0.2);
+    return max(1.0 - box, thumb);
+}
 
-    void main() {
-        vec2 uv = vUv * 2.0 - 1.0;
-        uv.x *= uResolution.x / uResolution.y;
+void main() {
+    vec2 uv = vUv * 2.0 - 1.0;
+    uv.x *= uResolution.x / uResolution.y;
 
-        float t = uTime * 0.5;
-        float rays = abs(sin(atan(uv.y, uv.x) * 5.0 + t));
-        float circle = smoothstep(0.5, 0.51, length(uv));
-        float s = 1.0 - star(uv * 2.0, 5.0, 0.3, 0.5);
-        float f = fist(uv);
-        float mixVal = max(max(rays * (1.0 - circle), s), f);
+    float t = uTime * 0.5;
 
-        vec3 col = renauPalette(mixVal);
-        gl_FragColor = vec4(col, 1.0);
-    }
+    // Fondo radial
+    float rays = abs(sin(atan(uv.y, uv.x) * 5.0 + t));
+    float circle = smoothstep(0.5, 0.51, length(uv));
+
+    // Estrella centrada, bien escalada
+    float s = star(uv * 1.5, 5.0, 0.2, 0.45); // centrado y escalado
+
+    // Fist opcional
+    float f = fist(uv);
+
+    // Mezcla elementos
+    float mixVal = max(max(rays * (1.0 - circle), s), f);
+
+    vec3 col = renauPalette(mixVal);
+    gl_FragColor = vec4(col, 1.0);
+}
 // precision mediump float;
 
 // uniform float uTime;
