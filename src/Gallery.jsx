@@ -55,12 +55,377 @@ export const Gallery = ({ ...props }) => {
     );
   };
 
+  // Create a red brick material for the walls
+  const createRedBrickMaterial = () => {
+    // Create procedural brick textures
+    const textureSize = 1024; // Increased for better detail
+    
+    // Create diffuse (color) texture
+    const diffuseCanvas = document.createElement('canvas');
+    diffuseCanvas.width = textureSize;
+    diffuseCanvas.height = textureSize;
+    const diffuseCtx = diffuseCanvas.getContext('2d');
+    
+    // Create normal map texture
+    const normalCanvas = document.createElement('canvas');
+    normalCanvas.width = textureSize;
+    normalCanvas.height = textureSize;
+    const normalCtx = normalCanvas.getContext('2d');
+    
+    // Create roughness texture
+    const roughnessCanvas = document.createElement('canvas');
+    roughnessCanvas.width = textureSize;
+    roughnessCanvas.height = textureSize;
+    const roughnessCtx = roughnessCanvas.getContext('2d');
+    
+    // Function to draw brick pattern
+    const drawBrickPattern = (ctx, colorFunc, rowCount = 16) => { // Fewer rows for larger bricks
+      const width = ctx.canvas.width;
+      const height = ctx.canvas.height;
+      
+      // Clear canvas
+      ctx.fillStyle = '#222'; // Darker mortar color
+      ctx.fillRect(0, 0, width, height);
+      
+      const brickHeight = height / rowCount;
+      const brickWidth = brickHeight * 2;
+      const mortarSize = brickHeight / 6; // Slightly thicker mortar
+      
+      // Draw bricks - starting from the bottom of the canvas
+      // This ensures proper alignment with Three.js UV coordinates (0,0 at bottom-left)
+      for (let row = 0; row < rowCount; row++) {
+        const offsetX = (row % 2) * (brickWidth / 2); // Offset every other row
+        
+        for (let col = -1; col < width / brickWidth + 1; col++) {
+          const x = col * brickWidth + offsetX;
+          const y = row * brickHeight;
+          
+          // Get color for this brick
+          const color = colorFunc(row, col);
+          
+          // Draw brick
+          ctx.fillStyle = color;
+          ctx.fillRect(
+            x + mortarSize / 2,
+            y + mortarSize / 2,
+            brickWidth - mortarSize,
+            brickHeight - mortarSize
+          );
+          
+          // Add some texture/noise to the brick
+          const brickWidth2 = brickWidth - mortarSize;
+          const brickHeight2 = brickHeight - mortarSize;
+          for (let i = 0; i < 20; i++) {
+            const noiseX = x + mortarSize / 2 + Math.random() * brickWidth2;
+            const noiseY = y + mortarSize / 2 + Math.random() * brickHeight2;
+            const noiseSize = 1 + Math.random() * 3;
+            ctx.fillStyle = `rgba(0,0,0,0.1)`;
+            ctx.beginPath();
+            ctx.arc(noiseX, noiseY, noiseSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+    };
+    
+    // Generate diffuse (color) map - red bricks with more variation
+    drawBrickPattern(diffuseCtx, (row, col) => {
+      // Random variation in brick color (red)
+      const r = 140 + Math.floor(Math.random() * 60); // Red component (stronger)
+      const g = 30 + Math.floor(Math.random() * 30); // Green component (minimal)
+      const b = 30 + Math.floor(Math.random() * 30); // Blue component (minimal)
+      return `rgb(${r}, ${g}, ${b})`;
+    });
+    
+    // Generate normal map - blue with variations
+    drawBrickPattern(normalCtx, () => 'rgb(127, 127, 255)');
+    
+    // Generate roughness map - grayscale
+    drawBrickPattern(roughnessCtx, () => {
+      const roughness = 150 + Math.floor(Math.random() * 70); // Fairly rough
+      return `rgb(${roughness}, ${roughness}, ${roughness})`;
+    });
+    
+    // Create textures from canvases
+    const diffuseTexture = new THREE.CanvasTexture(diffuseCanvas);
+    diffuseTexture.wrapS = THREE.RepeatWrapping;
+    diffuseTexture.wrapT = THREE.RepeatWrapping;
+    diffuseTexture.repeat.set(2, 2); // Further reduced repetition for better visibility
+    
+    const normalTexture = new THREE.CanvasTexture(normalCanvas);
+    normalTexture.wrapS = THREE.RepeatWrapping;
+    normalTexture.wrapT = THREE.RepeatWrapping;
+    normalTexture.repeat.set(2, 2);
+    
+    const roughnessTexture = new THREE.CanvasTexture(roughnessCanvas);
+    roughnessTexture.wrapS = THREE.RepeatWrapping;
+    roughnessTexture.wrapT = THREE.RepeatWrapping;
+    roughnessTexture.repeat.set(2, 2);
+    
+    // Create the red brick material
+    return new THREE.MeshStandardMaterial({
+      map: diffuseTexture,
+      normalMap: normalTexture,
+      roughnessMap: roughnessTexture,
+      roughness: 0.9,
+      metalness: 0.1,
+      bumpScale: 0.05, // Increased bump for more texture
+    });
+  };
+  
+  // Create a reusable red brick wall component
+  const RedBrickWall = ({ width, height, position, rotation }) => {
+    const redBrickMaterial = createRedBrickMaterial();
+    
+    // Create a custom plane geometry with proper UV mapping
+    const createCustomPlaneGeometry = (width, height) => {
+      // Create a standard plane geometry with more segments for better texture mapping
+      const geometry = new THREE.PlaneGeometry(width, height, 4, 4);
+      
+      // Get the UV attribute
+      const uvAttribute = geometry.attributes.uv;
+      
+      // Modify UV coordinates to ensure proper texture alignment
+      // Standard UV mapping: (0,0) bottom-left, (1,1) top-right
+      // We'll ensure this is consistent for all walls regardless of rotation
+      for (let i = 0; i < uvAttribute.count; i++) {
+        const u = uvAttribute.getX(i);
+        const v = uvAttribute.getY(i);
+        
+        // Ensure v coordinate starts from 0 at the bottom and goes to 1 at the top
+        // This ensures the brick pattern starts from the bottom of each wall
+        uvAttribute.setXY(i, u, v);
+      }
+      
+      return geometry;
+    };
+    
+    // Clone the material to avoid sharing across different walls
+    // This allows for potential per-wall customization if needed
+    const wallMaterial = redBrickMaterial.clone();
+    
+    return (
+      <mesh position={position} rotation={rotation} receiveShadow castShadow>
+        <primitive object={createCustomPlaneGeometry(width, height)} attach="geometry" />
+        <primitive object={wallMaterial} attach="material" />
+      </mesh>
+    );
+  };
+
   return (
     <group {...props}>
+      {/* Add red brick walls to cover the existing white walls */}
+      {/* Front wall */}
+      <RedBrickWall
+        width={14}
+        height={5}
+        position={[0, 1.5, -5.02]}
+        rotation={[0, 0, 0]}
+      />
+      
+      {/* Back wall */}
+      <RedBrickWall
+        width={14}
+        height={5}
+        position={[0, 1.5, 5.02]}
+        rotation={[0, Math.PI, 0]}
+      />
+      
+      {/* Left wall */}
+      <RedBrickWall
+        width={12}
+        height={5}
+        position={[-5.02, 1.5, 0]}
+        rotation={[0, Math.PI / 2, 0]}
+      />
+      
+      {/* Right wall */}
+      <RedBrickWall
+        width={12}
+        height={5}
+        position={[5.02, 1.5, 0]}
+        rotation={[0, -Math.PI / 2, 0]}
+      />
+      
       <Gltf
         src="/models/vr_gallery.glb"
         receiveShadow
         castShadow
+        onLoad={(gltf) => {
+          console.log("Model loaded:", gltf);
+          
+          // Debug: Log all meshes in the model to help identify walls
+          console.log("All meshes in the model:");
+          gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+              console.log("Mesh:", child.name, "Material:", child.material, "Position:", child.position);
+            }
+          });
+          
+          // Create procedural brick textures
+          const textureSize = 512;
+          
+          // Create diffuse (color) texture
+          const diffuseCanvas = document.createElement('canvas');
+          diffuseCanvas.width = textureSize;
+          diffuseCanvas.height = textureSize;
+          const diffuseCtx = diffuseCanvas.getContext('2d');
+          
+          // Create normal map texture
+          const normalCanvas = document.createElement('canvas');
+          normalCanvas.width = textureSize;
+          normalCanvas.height = textureSize;
+          const normalCtx = normalCanvas.getContext('2d');
+          
+          // Create roughness texture
+          const roughnessCanvas = document.createElement('canvas');
+          roughnessCanvas.width = textureSize;
+          roughnessCanvas.height = textureSize;
+          const roughnessCtx = roughnessCanvas.getContext('2d');
+          
+          // Function to draw brick pattern
+          const drawBrickPattern = (ctx, colorFunc, rowCount = 16) => {
+            const width = ctx.canvas.width;
+            const height = ctx.canvas.height;
+            
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            const brickHeight = height / rowCount;
+            const brickWidth = brickHeight * 2;
+            const mortarSize = brickHeight / 8;
+            
+            // Draw bricks
+            for (let row = 0; row < rowCount; row++) {
+              const offsetX = (row % 2) * (brickWidth / 2); // Offset every other row
+              
+              for (let col = -1; col < width / brickWidth + 1; col++) {
+                const x = col * brickWidth + offsetX;
+                const y = row * brickHeight;
+                
+                // Get color for this brick
+                const color = colorFunc(row, col);
+                
+                // Draw brick
+                ctx.fillStyle = color;
+                ctx.fillRect(
+                  x + mortarSize / 2, 
+                  y + mortarSize / 2, 
+                  brickWidth - mortarSize, 
+                  brickHeight - mortarSize
+                );
+              }
+            }
+          };
+          
+          // Generate diffuse (color) map - red bricks
+          drawBrickPattern(diffuseCtx, (row, col) => {
+            // Random variation in brick color (red)
+            const r = 120 + Math.floor(Math.random() * 40); // Red component (stronger)
+            const g = 20 + Math.floor(Math.random() * 20); // Green component (minimal)
+            const b = 20 + Math.floor(Math.random() * 20); // Blue component (minimal)
+            return `rgb(${r}, ${g}, ${b})`;
+          });
+          
+          // Generate normal map - blue with variations
+          drawBrickPattern(normalCtx, () => 'rgb(127, 127, 255)');
+          
+          // Generate roughness map - grayscale
+          drawBrickPattern(roughnessCtx, () => {
+            const roughness = 150 + Math.floor(Math.random() * 70); // Fairly rough
+            return `rgb(${roughness}, ${roughness}, ${roughness})`;
+          });
+          
+          // Create textures from canvases
+          const diffuseTexture = new THREE.CanvasTexture(diffuseCanvas);
+          diffuseTexture.wrapS = THREE.RepeatWrapping;
+          diffuseTexture.wrapT = THREE.RepeatWrapping;
+          diffuseTexture.repeat.set(4, 4);
+          
+          const normalTexture = new THREE.CanvasTexture(normalCanvas);
+          normalTexture.wrapS = THREE.RepeatWrapping;
+          normalTexture.wrapT = THREE.RepeatWrapping;
+          normalTexture.repeat.set(4, 4);
+          
+          const roughnessTexture = new THREE.CanvasTexture(roughnessCanvas);
+          roughnessTexture.wrapS = THREE.RepeatWrapping;
+          roughnessTexture.wrapT = THREE.RepeatWrapping;
+          roughnessTexture.repeat.set(4, 4);
+          
+          // Create the red brick material
+          const redBrickMaterial = new THREE.MeshStandardMaterial({
+            map: diffuseTexture,
+            normalMap: normalTexture,
+            roughnessMap: roughnessTexture,
+            roughness: 0.9,
+            metalness: 0.1,
+            bumpScale: 0.02,
+          });
+          
+          // VERY aggressive approach: Apply to ALL meshes in the model
+          // This is a brute force approach, but it will ensure that the walls are changed
+          console.log("Applying red brick material to all meshes in the model");
+          let wallsFound = 0;
+          
+          // First, log all materials in the model to help identify walls
+          console.log("All materials in the model:");
+          const allMaterials = new Set();
+          gltf.scene.traverse((child) => {
+            if (child.isMesh && child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(mat => {
+                  if (mat && mat.color) {
+                    allMaterials.add(`${mat.uuid}: r=${mat.color.r}, g=${mat.color.g}, b=${mat.color.b}`);
+                  }
+                });
+              } else if (child.material.color) {
+                allMaterials.add(`${child.material.uuid}: r=${child.material.color.r}, g=${child.material.color.g}, b=${child.material.color.b}`);
+              }
+            }
+          });
+          console.log([...allMaterials]);
+          
+          // Now apply the red brick material to all meshes with white/light materials
+          gltf.scene.traverse((child) => {
+            if (child.isMesh) {
+              // Check if this mesh has a material that looks like a wall
+              let isWallMaterial = false;
+              
+              if (Array.isArray(child.material)) {
+                // Check if any of the materials are white/light colored
+                isWallMaterial = child.material.some(mat =>
+                  mat && mat.color &&
+                  mat.color.r > 0.8 &&
+                  mat.color.g > 0.8 &&
+                  mat.color.b > 0.8
+                );
+              } else if (child.material && child.material.color) {
+                // Check if the material is white/light colored
+                isWallMaterial =
+                  child.material.color.r > 0.8 &&
+                  child.material.color.g > 0.8 &&
+                  child.material.color.b > 0.8;
+              }
+              
+              if (isWallMaterial) {
+                console.log("Found wall mesh with white material:", child.name, "Position:", child.position);
+                wallsFound++;
+                
+                // Apply the new material to the wall
+                if (Array.isArray(child.material)) {
+                  // If the mesh has multiple materials, replace them all
+                  child.material = child.material.map(() => redBrickMaterial.clone());
+                } else {
+                  // If the mesh has a single material
+                  child.material = redBrickMaterial.clone();
+                }
+              }
+            }
+          });
+          
+          console.log(`Modified ${wallsFound} wall meshes with red brick material`);
+        }}
         // "VR Gallery" (https://skfb.ly/ooRLp) by Maxim Mavrichev is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
       />
       
