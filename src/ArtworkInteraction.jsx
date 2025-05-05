@@ -76,6 +76,18 @@ const artworkInfo = {
     artist: "User",
     year: "2025",
     description: "A custom image uploaded by the user, demonstrating the gallery's ability to display external images alongside procedurally generated artwork."
+  },
+  image02: {
+    title: "Ethereal Landscape",
+    artist: "Elvida Santos",
+    year: "2024",
+    description: "A vibrant and expressive landscape that blends natural elements with abstract forms, showcasing Santos' signature style of bold colors and fluid compositions."
+  },
+  image03: {
+    title: "Engineering Marvel",
+    artist: "Technical Illustrations Group",
+    year: "2023",
+    description: "A detailed technical illustration of an advanced engine design, highlighting the intricate components and engineering precision of modern mechanical systems."
   }
 };
 

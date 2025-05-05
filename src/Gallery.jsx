@@ -173,6 +173,28 @@ export const Gallery = ({ ...props }) => {
 
       {/* LEFT WALL */}
       <group position-x={-5} rotation-y={degToRad(90)}>
+        {/* New image artwork - Elvida Santos */}
+        <Frame
+          position-x={-6}
+          position-y={1.5}
+          width={2}
+          height={2.5}
+          borderSize={0.1}
+          color="#222222"
+          receiveShadow
+          castShadow
+        >
+          <Suspense fallback={<meshBasicMaterial color="#444444" />}>
+            {createArtwork(
+              "image02",
+              <planeGeometry args={[1.8, 2.3]} />,
+              <ImageMaterial
+                imageUrl="/images/Elvida Santos 6.jpg"
+                ref={(ref) => (frameRefs.current["image02"] = ref)}
+              />
+            )}
+          </Suspense>
+        </Frame>
         <Frame
           borderSize={0.05}
           position-x={-3.2}
@@ -303,6 +325,29 @@ export const Gallery = ({ ...props }) => {
               ref={(ref) => (frameRefs.current["rear04"] = ref)}
             />
           )}
+        </Frame>
+        
+        {/* New image artwork - Engine Hero */}
+        <Frame
+          position-x={1}
+          position-y={1.5}
+          width={2.5}
+          height={1.8}
+          borderSize={0.1}
+          color="#333333"
+          receiveShadow
+          castShadow
+        >
+          <Suspense fallback={<meshBasicMaterial color="#444444" />}>
+            {createArtwork(
+              "image03",
+              <planeGeometry args={[2.3, 1.6]} />,
+              <ImageMaterial
+                imageUrl="/images/engineherolrg.png"
+                ref={(ref) => (frameRefs.current["image03"] = ref)}
+              />
+            )}
+          </Suspense>
         </Frame>
       </group>
 
