@@ -1,5 +1,4 @@
-import { useTexture } from "@react-three/drei";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import * as THREE from "three";
 
 export const Frame = ({
@@ -8,95 +7,16 @@ export const Frame = ({
   borderSize = 0.1,
   color = "#ececec",
   children,
-  materialType = "wood", // Options: "wood", "metal", "painted"
+  materialType = "painted", // Only using painted now to avoid CORS issues
   ...props
 }) => {
-  // Load textures for PBR materials
-  const woodTextures = useTexture({
-    map: "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fine_wood/fine_wood_diff_1k.jpg",
-    normalMap: "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fine_wood/fine_wood_nor_gl_1k.jpg",
-    roughnessMap: "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fine_wood/fine_wood_rough_1k.jpg",
-    aoMap: "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fine_wood/fine_wood_ao_1k.jpg",
+  // Create a simple material without external textures
+  const frameMaterial = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(color),
+    roughness: materialType === "metal" ? 0.3 : 0.8,
+    metalness: materialType === "metal" ? 0.9 : 0.1,
+    envMapIntensity: materialType === "metal" ? 1.5 : 0.8,
   });
-  
-  const metalTextures = useTexture({
-    map: "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brushed_metal/brushed_metal_diff_1k.jpg",
-    normalMap: "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brushed_metal/brushed_metal_nor_gl_1k.jpg",
-    roughnessMap: "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brushed_metal/brushed_metal_rough_1k.jpg",
-    metalnessMap: "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brushed_metal/brushed_metal_metal_1k.jpg",
-  });
-
-  // Configure texture settings
-  const configureTextures = (textures) => {
-    Object.values(textures).forEach((texture) => {
-      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    });
-    return textures;
-  };
-
-  // Set up material based on type
-  const getMaterial = () => {
-    let material;
-    
-    switch (materialType) {
-      case "wood":
-        const woodTexturesConfig = configureTextures(woodTextures);
-        material = new THREE.MeshStandardMaterial({
-          map: woodTexturesConfig.map,
-          normalMap: woodTexturesConfig.normalMap,
-          roughnessMap: woodTexturesConfig.roughnessMap,
-          aoMap: woodTexturesConfig.aoMap,
-          normalScale: new THREE.Vector2(0.5, 0.5),
-          roughness: 0.8,
-          metalness: 0.1,
-          envMapIntensity: 1,
-          color: new THREE.Color(color),
-        });
-        break;
-        
-      case "metal":
-        const metalTexturesConfig = configureTextures(metalTextures);
-        material = new THREE.MeshStandardMaterial({
-          map: metalTexturesConfig.map,
-          normalMap: metalTexturesConfig.normalMap,
-          roughnessMap: metalTexturesConfig.roughnessMap,
-          metalnessMap: metalTexturesConfig.metalnessMap,
-          normalScale: new THREE.Vector2(0.5, 0.5),
-          roughness: 0.3,
-          metalness: 0.9,
-          envMapIntensity: 1.5,
-          color: new THREE.Color(color),
-        });
-        break;
-        
-      case "painted":
-      default:
-        material = new THREE.MeshStandardMaterial({
-          color: new THREE.Color(color),
-          roughness: 0.2,
-          metalness: 0.1,
-          envMapIntensity: 0.8,
-        });
-        break;
-    }
-    
-    return material;
-  };
-
-  // Create material
-  const frameMaterial = getMaterial();
-  
-  // Set up texture repeat based on frame dimensions
-  useEffect(() => {
-    if (materialType === "wood" || materialType === "metal") {
-      const textures = materialType === "wood" ? woodTextures : metalTextures;
-      
-      // Set texture repeat based on frame dimensions
-      Object.values(textures).forEach((texture) => {
-        texture.repeat.set(1, height);
-      });
-    }
-  }, [width, height, materialType]);
 
   // Create frame geometry with beveled edges for more realism
   const frameGeometry = (w, h, d) => {

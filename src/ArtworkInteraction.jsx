@@ -70,6 +70,12 @@ const artworkInfo = {
     artist: "James Wilson",
     year: "2023",
     description: "Final piece in the miniature triptych, focusing on movement and time."
+  },
+  image01: {
+    title: "Custom Image",
+    artist: "User",
+    year: "2025",
+    description: "A custom image uploaded by the user, demonstrating the gallery's ability to display external images alongside procedurally generated artwork."
   }
 };
 

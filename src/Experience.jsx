@@ -1,4 +1,4 @@
-import { CameraControls, Environment, AccumulativeShadows, RandomizedLight, BakeShadows, AmbientLight, SpotLight, useHelper } from "@react-three/drei";
+import { CameraControls, Environment, AccumulativeShadows, RandomizedLight, BakeShadows, SpotLight, useHelper } from "@react-three/drei";
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";

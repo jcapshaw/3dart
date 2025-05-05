@@ -1,10 +1,11 @@
 import { Gltf } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useRef, useState } from "react";
+import { useRef, useState, Suspense } from "react";
 import { degToRad } from "three/src/math/MathUtils";
 import { Frame } from "./Frame";
 import { ArtworkInteraction } from "./ArtworkInteraction";
 import * as THREE from "three";
+import { ImageMaterial } from "./materials/ImageMaterial";
 
 export const Gallery = ({ ...props }) => {
   const frameRefs = useRef([]);
@@ -126,10 +127,12 @@ export const Gallery = ({ ...props }) => {
 
       {/* RIGHT WALL */}
       <group rotation-y={degToRad(-90)} position-x={5}>
-        <Frame 
-          position-y={1.5} 
-          width={5} 
-          height={2} 
+        {/* Original artwork */}
+        <Frame
+          position-y={1.5}
+          position-z={-1.5}
+          width={5}
+          height={2}
           borderSize={0.2}
           receiveShadow
           castShadow
@@ -142,6 +145,29 @@ export const Gallery = ({ ...props }) => {
               ref={(ref) => (frameRefs.current["right01"] = ref)}
             />
           )}
+        </Frame>
+        
+        {/* New image artwork */}
+        <Frame
+          position-y={1.5}
+          position-z={1.5}
+          width={2}
+          height={2}
+          borderSize={0.1}
+          color="#222222"
+          receiveShadow
+          castShadow
+        >
+          <Suspense fallback={<meshBasicMaterial color="#444444" />}>
+            {createArtwork(
+              "image01",
+              <planeGeometry args={[1.8, 1.8]} />,
+              <ImageMaterial
+                imageUrl="https://picsum.photos/512/512"
+                ref={(ref) => (frameRefs.current["image01"] = ref)}
+              />
+            )}
+          </Suspense>
         </Frame>
       </group>
 

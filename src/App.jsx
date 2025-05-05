@@ -30,7 +30,7 @@ extend({
 
 function App() {
   return (
-    <Canvas shadows camera={{ position: [0, 0, 0.00001], fov: 65 }}>
+    <Canvas shadows camera={{ position: [0, 0, 5], fov: 65 }}>
       <Experience />
     </Canvas>
   );
