@@ -6,3 +6,53 @@
 body {
   margin: 0;
 }
+
+.artwork-info-panel {
+  pointer-events: auto !important;
+}
+
+.info-panel {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  max-width: 80vw;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.info-panel h2 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  font-size: 1.5em;
+}
+
+.info-panel h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1em;
+  font-weight: normal;
+  color: #cccccc;
+}
+
+.info-panel p {
+  line-height: 1.5;
+}
+
+/* Hover effect for artworks */
+.artwork-hover {
+  outline: 2px solid white;
+  transition: outline 0.2s ease;
+}

@@ -1,11 +1,23 @@
 import { Gltf } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { degToRad } from "three/src/math/MathUtils";
 import { Frame } from "./Frame";
+import { ArtworkInteraction } from "./ArtworkInteraction";
+import * as THREE from "three";
 
 export const Gallery = ({ ...props }) => {
   const frameRefs = useRef([]);
+  const artworkRefs = useRef({});
+  const [hoveredArtwork, setHoveredArtwork] = useState(null);
+
+  // Create a highlight material for hover effect
+  const highlightMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.2,
+    side: THREE.FrontSide,
+  });
 
   useFrame(({ clock }) => {
     const elapsedTime = clock.getElapsedTime();
@@ -14,12 +26,43 @@ export const Gallery = ({ ...props }) => {
     }
   });
 
+  // Helper function to create artwork with interaction capabilities
+  const createArtwork = (id, geometry, material, props = {}) => {
+    return (
+      <mesh 
+        {...props}
+        userData={{ isArtwork: true, artworkId: id }}
+        ref={(ref) => {
+          if (ref) {
+            artworkRefs.current[id] = ref;
+          }
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHoveredArtwork(id);
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          setHoveredArtwork(null);
+          document.body.style.cursor = 'auto';
+        }}
+      >
+        {geometry}
+        {material}
+      </mesh>
+    );
+  };
+
   return (
     <group {...props}>
       <Gltf
         src="/models/vr_gallery.glb"
+        receiveShadow
+        castShadow
         // "VR Gallery" (https://skfb.ly/ooRLp) by Maxim Mavrichev is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
       />
+      
       {/* FRONT FRAMES */}
       <group position-z={-5}>
         <Frame
@@ -29,14 +72,17 @@ export const Gallery = ({ ...props }) => {
           height={1}
           borderSize={0.05}
           color="#555555"
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[0.8, 0.8]} />
+          {createArtwork(
+            "front01",
+            <planeGeometry args={[0.8, 0.8]} />,
             <artFront01Material
               uColor="#00897B"
               ref={(ref) => (frameRefs.current["front01"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
         <Frame
           position-x={0}
@@ -44,14 +90,17 @@ export const Gallery = ({ ...props }) => {
           width={1.2}
           height={1.6}
           color="black"
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[1, 1.4]} />
+          {createArtwork(
+            "front02",
+            <planeGeometry args={[1, 1.4]} />,
             <artFront02Material
               uColor="mediumpurple"
               ref={(ref) => (frameRefs.current["front02"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
         <Frame
           borderSize={0.05}
@@ -60,28 +109,39 @@ export const Gallery = ({ ...props }) => {
           width={1.4}
           height={0.8}
           color="#555555"
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[1.2, 0.6]} />
+          {createArtwork(
+            "front03",
+            <planeGeometry args={[1.2, 0.6]} />,
             <artFront03Material
               uColorStart="#6A0DAD"
               uColorEnd="#4B0082"
               ref={(ref) => (frameRefs.current["front03"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
       </group>
 
       {/* RIGHT WALL */}
       <group rotation-y={degToRad(-90)} position-x={5}>
-        <Frame position-y={1.5} width={5} height={2} borderSize={0.2}>
-          <mesh>
-            <planeGeometry args={[5, 2, 1]} />
+        <Frame 
+          position-y={1.5} 
+          width={5} 
+          height={2} 
+          borderSize={0.2}
+          receiveShadow
+          castShadow
+        >
+          {createArtwork(
+            "right01",
+            <planeGeometry args={[5, 2, 1]} />,
             <artRight01Material
               uColor="black"
               ref={(ref) => (frameRefs.current["right01"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
       </group>
 
@@ -93,23 +153,33 @@ export const Gallery = ({ ...props }) => {
           position-y={1.5}
           width={1}
           height={2}
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[1, 2]} />
+          {createArtwork(
+            "left01",
+            <planeGeometry args={[1, 2]} />,
             <artLeft01Material
               uColor="black"
               ref={(ref) => (frameRefs.current["left01"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
-        <Frame position-y={1.5} width={3.6} height={2}>
-          <mesh>
-            <planeGeometry args={[3.4, 1.8, 1]} />
+        <Frame 
+          position-y={1.5} 
+          width={3.6} 
+          height={2}
+          receiveShadow
+          castShadow
+        >
+          {createArtwork(
+            "left02",
+            <planeGeometry args={[3.4, 1.8, 1]} />,
             <artLeft02Material
               uColor="black"
               ref={(ref) => (frameRefs.current["left02"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
 
         <Frame
@@ -118,15 +188,18 @@ export const Gallery = ({ ...props }) => {
           position-y={1.5}
           width={1}
           height={2}
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[1, 2]} />
+          {createArtwork(
+            "left03",
+            <planeGeometry args={[1, 2]} />,
             <artLeft03Material
               uColor="black"
               ref={(ref) => (frameRefs.current["left03"] = ref)}
               uResolution={[1, 2]}
             />
-          </mesh>
+          )}
         </Frame>
       </group>
 
@@ -138,15 +211,18 @@ export const Gallery = ({ ...props }) => {
           width={1}
           height={1}
           borderSize={0.2}
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[1, 1]} />
+          {createArtwork(
+            "rear01",
+            <planeGeometry args={[1, 1]} />,
             <artRear01Material
               uColor="purple"
               ref={(ref) => (frameRefs.current["rear01"] = ref)}
               uResolution={[1, 0.5]}
             />
-          </mesh>
+          )}
         </Frame>
         <Frame
           position-x={2.75}
@@ -154,14 +230,17 @@ export const Gallery = ({ ...props }) => {
           width={0.5}
           height={0.5}
           borderSize={0.025}
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[0.4, 0.4]} />
+          {createArtwork(
+            "rear02",
+            <planeGeometry args={[0.4, 0.4]} />,
             <artRear02Material
               uColor="purple"
               ref={(ref) => (frameRefs.current["rear02"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
         <Frame
           position-x={2.75}
@@ -169,14 +248,17 @@ export const Gallery = ({ ...props }) => {
           width={0.5}
           height={0.5}
           borderSize={0.025}
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[0.4, 0.4]} />
+          {createArtwork(
+            "rear03",
+            <planeGeometry args={[0.4, 0.4]} />,
             <artRear03Material
               uColor="black"
               ref={(ref) => (frameRefs.current["rear03"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
         <Frame
           position-x={2.75}
@@ -184,16 +266,22 @@ export const Gallery = ({ ...props }) => {
           width={0.5}
           height={0.5}
           borderSize={0.025}
+          receiveShadow
+          castShadow
         >
-          <mesh>
-            <planeGeometry args={[0.4, 0.4]} />
+          {createArtwork(
+            "rear04",
+            <planeGeometry args={[0.4, 0.4]} />,
             <artRear04Material
               uColor="black"
               ref={(ref) => (frameRefs.current["rear04"] = ref)}
             />
-          </mesh>
+          )}
         </Frame>
       </group>
+
+      {/* Artwork interaction component */}
+      <ArtworkInteraction frameRefs={frameRefs} />
     </group>
   );
 };
